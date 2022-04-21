@@ -48,6 +48,58 @@ resource "aws_efs_access_point" "onlyoffice-ap" {
   file_system_id = aws_efs_file_system.onlyoffice.id
 }
 
+resource "aws_efs_access_point" "onlyoffice-logs" {
+  file_system_id = aws_efs_file_system.onlyoffice.id
+  posix_user {
+    gid = 0
+    uid = 0
+  }
+
+  root_directory {
+    creation_info {
+      owner_gid   = 0
+      owner_uid   = 0
+      permissions = "0777"
+    }
+    path = "/onlyoffice/logs"
+  }
+}
+
+resource "aws_efs_access_point" "onlyoffice-files" {
+  file_system_id = aws_efs_file_system.onlyoffice.id
+  posix_user {
+    gid = 0
+    uid = 0
+  }
+
+  root_directory {
+    creation_info {
+      owner_gid   = 0
+      owner_uid   = 0
+      permissions = "0777"
+    }
+    path = "/onlyoffice/files"
+  }
+}
+
+resource "aws_efs_access_point" "rabbitmq" {
+  file_system_id = aws_efs_file_system.onlyoffice.id
+  posix_user {
+    gid = 0
+    uid = 0
+  }
+
+  root_directory {
+    creation_info {
+      owner_gid   = 0
+      owner_uid   = 0
+      permissions = "0777"
+    }
+
+    path = "/rabbitmq"
+  }
+}
+
 resource "aws_efs_mount_target" "pub1e" {
   file_system_id  = aws_efs_file_system.onlyoffice.id
   subnet_id       = aws_subnet.public_e.id
@@ -66,8 +118,8 @@ resource "aws_efs_mount_target" "pub1d" {
 
 resource "aws_ecs_task_definition" "onlyoffice" {
   family                   = "onlyoffice"
-  cpu                      = 256
-  memory                   = 512
+  cpu                      = 1024
+  memory                   = 2048
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   execution_role_arn       = aws_iam_role.onlyoffice_task_execution_role.arn
@@ -95,23 +147,54 @@ resource "aws_ecs_task_definition" "onlyoffice" {
 
       mountPoints = [
         {
-          sourceVolume  = "onlyoffice"
+          sourceVolume  = "onlyoffice-files"
           containerPath = "/var/lib/onlyoffice"
         },
         {
-          sourceVolume  = "onlyoffice"
+          sourceVolume  = "onlyoffice-logs"
           containerPath = "/var/log/onlyoffice"
+        },
+        {
+          sourceVolume = "rabbitmq"
+          containerPath = "/var/lib/rabbitmq"
         }
       ]
     }
   ])
 
   volume {
-    name = "onlyoffice"
+    name = "onlyoffice-logs"
 
     efs_volume_configuration {
       file_system_id = aws_efs_file_system.onlyoffice.id
-      root_directory = "/"
+      transit_encryption = "ENABLED"
+      authorization_config {
+        access_point_id = aws_efs_access_point.onlyoffice-logs.id
+      }
+    }
+  }
+
+  volume {
+    name = "onlyoffice-files"
+
+    efs_volume_configuration {
+      file_system_id = aws_efs_file_system.onlyoffice.id
+      transit_encryption = "ENABLED"
+      authorization_config {
+        access_point_id = aws_efs_access_point.onlyoffice-files.id
+      }
+    }
+  }
+
+  volume {
+    name = "rabbitmq"
+
+    efs_volume_configuration {
+      file_system_id = aws_efs_file_system.onlyoffice.id
+      transit_encryption = "ENABLED"
+      authorization_config {
+        access_point_id = aws_efs_access_point.rabbitmq.id
+      }
     }
   }
 }
@@ -187,7 +270,7 @@ resource "aws_lb_target_group" "onlyoffice" {
     protocol = "HTTP"
     path     = "/"
     timeout  = 120
-    interval = 120
+    interval = 180
     matcher  = "200,302"
     healthy_threshold = 2
   }
