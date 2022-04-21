@@ -31,7 +31,7 @@ build {
 
     post-processor "docker-push" {
       ecr_login    = true
-      aws_profile  = "acloudguru"
+      aws_profile  = "default"
       login_server = "https://085935842926.dkr.ecr.us-east-1.amazonaws.com/onlyoffice"
     }
 
