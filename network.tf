@@ -1,5 +1,25 @@
 resource "aws_vpc" "app_vpc" {
   cidr_block = "10.0.0.0/16"
+  enable_dns_hostnames = true
+}
+
+resource "aws_vpc_endpoint" "efs" {
+  service_name = "com.amazonaws.us-east-1.elasticfilesystem"
+  vpc_id       = aws_vpc.app_vpc.id
+  private_dns_enabled = true
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [
+    aws_security_group.nfs.id,
+    aws_security_group.egress_all.id,
+    aws_security_group.http.id,
+    aws_security_group.https.id
+  ]
+
+  subnet_ids = [
+    aws_subnet.private_e.id,
+    aws_subnet.private_d.id
+  ]
 }
 
 resource "aws_subnet" "public_d" {
@@ -141,6 +161,18 @@ resource "aws_security_group" "egress_all" {
   }
 }
 
+resource "aws_security_group" "nfs" {
+  name = "allow-nfs"
+  description = "Allow NFS traffic for mounting EFS volumes"
+  vpc_id = aws_vpc.app_vpc.id
+
+  ingress {
+    from_port = 2049
+    protocol  = "TCP"
+    to_port   = 2049
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 
 
 

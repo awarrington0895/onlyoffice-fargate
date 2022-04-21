@@ -17,6 +17,10 @@ data "aws_iam_policy" "ecs_task_execution_role" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+data "aws_iam_policy" "efs_full_access" {
+  arn = "arn:aws:iam::aws:policy/AmazonElasticFileSystemFullAccess"
+}
+
 resource "aws_iam_role" "onlyoffice_task_execution_role" {
   name               = "onlyoffice-task-execution-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
@@ -27,8 +31,37 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role" {
   policy_arn = data.aws_iam_policy.ecs_task_execution_role.arn
 }
 
+resource "aws_iam_role_policy_attachment" "efs_full_access" {
+  role       = aws_iam_role.onlyoffice_task_execution_role.name
+  policy_arn = data.aws_iam_policy.efs_full_access.arn
+}
+
 resource "aws_ecs_cluster" "app" {
   name = "app"
+}
+
+resource "aws_efs_file_system" "onlyoffice" {
+  creation_token = "onlyoffice-volume"
+}
+
+resource "aws_efs_access_point" "onlyoffice-ap" {
+  file_system_id = aws_efs_file_system.onlyoffice.id
+}
+
+resource "aws_efs_mount_target" "pub1e" {
+  file_system_id  = aws_efs_file_system.onlyoffice.id
+  subnet_id       = aws_subnet.public_e.id
+  security_groups = [
+    aws_security_group.nfs.id
+  ]
+}
+
+resource "aws_efs_mount_target" "pub1d" {
+  file_system_id  = aws_efs_file_system.onlyoffice.id
+  subnet_id       = aws_subnet.public_d.id
+  security_groups = [
+    aws_security_group.nfs.id
+  ]
 }
 
 resource "aws_ecs_task_definition" "onlyoffice" {
@@ -43,12 +76,14 @@ resource "aws_ecs_task_definition" "onlyoffice" {
     {
       name         = "onlyoffice"
       image        = "${aws_ecr_repository.onlyoffice.repository_url}:latest"
+      #      image        = "onlyoffice/documentserver-de:7.0.1"
       portMappings = [
         {
           containerPort = 80
           hostPort      = 80
         }
       ]
+
       logConfiguration = {
         logDriver = "awslogs"
         options   = {
@@ -57,8 +92,28 @@ resource "aws_ecs_task_definition" "onlyoffice" {
           awslogs-stream-prefix = "ecs"
         }
       }
+
+      mountPoints = [
+        {
+          sourceVolume  = "onlyoffice"
+          containerPath = "/var/lib/onlyoffice"
+        },
+        {
+          sourceVolume  = "onlyoffice"
+          containerPath = "/var/log/onlyoffice"
+        }
+      ]
     }
   ])
+
+  volume {
+    name = "onlyoffice"
+
+    efs_volume_configuration {
+      file_system_id = aws_efs_file_system.onlyoffice.id
+      root_directory = "/"
+    }
+  }
 }
 
 resource "aws_ecs_service" "onlyoffice" {
@@ -66,14 +121,15 @@ resource "aws_ecs_service" "onlyoffice" {
   task_definition = aws_ecs_task_definition.onlyoffice.arn
   cluster         = aws_ecs_cluster.app.id
   launch_type     = "FARGATE"
-  desired_count = 1
+  desired_count   = 1
 
   network_configuration {
     assign_public_ip = false
 
     security_groups = [
       aws_security_group.egress_all.id,
-      aws_security_group.http.id
+      aws_security_group.http.id,
+      aws_security_group.nfs.id
     ]
 
     subnets = [
@@ -84,14 +140,14 @@ resource "aws_ecs_service" "onlyoffice" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.onlyoffice.arn
-    container_name = "onlyoffice"
-    container_port = 80
+    container_name   = "onlyoffice"
+    container_port   = 80
   }
 }
 
 resource "aws_alb" "onlyoffice" {
-  name = "onlyoffice-lb"
-  internal = false
+  name               = "onlyoffice-lb"
+  internal           = false
   load_balancer_type = "application"
 
   subnets = [
@@ -110,30 +166,30 @@ resource "aws_alb" "onlyoffice" {
 
 resource "aws_alb_listener" "onlyoffice_http" {
   load_balancer_arn = aws_alb.onlyoffice.arn
-  port = "80"
-  protocol = "HTTP"
+  port              = "80"
+  protocol          = "HTTP"
 
   default_action {
-    type = "forward"
+    type             = "forward"
     target_group_arn = aws_lb_target_group.onlyoffice.arn
   }
 }
 
 resource "aws_lb_target_group" "onlyoffice" {
-  name = "onlyoffice"
-  port = 80
-  protocol = "HTTP"
+  name        = "onlyoffice"
+  port        = 80
+  protocol    = "HTTP"
   target_type = "ip"
-  vpc_id = aws_vpc.app_vpc.id
+  vpc_id      = aws_vpc.app_vpc.id
 
   health_check {
-    enabled = true
+    enabled  = true
     protocol = "HTTP"
-    path = "/"
-    timeout = 120
-    interval = 300
-    matcher = "200,302"
-
+    path     = "/"
+    timeout  = 120
+    interval = 120
+    matcher  = "200,302"
+    healthy_threshold = 2
   }
 
   depends_on = [aws_alb.onlyoffice]

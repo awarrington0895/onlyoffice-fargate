@@ -1,16 +1,14 @@
 provider "aws" {
   region = "us-east-1"
-  profile = "acloudguru"
 }
 
 terraform {
   required_version = ">= 1.0"
 
   backend "s3" {
-    bucket = "asw-sample-tf-backend"
+    bucket = "asw-sample-tf-backend-2"
     key = "terraform.tfstate"
     region = "us-east-1"
-    profile = "default"
   }
 
   required_providers {
