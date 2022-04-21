@@ -10,7 +10,7 @@ terraform {
     bucket = "asw-sample-tf-backend"
     key = "terraform.tfstate"
     region = "us-east-1"
-    profile = "acloudguru"
+    profile = "default"
   }
 
   required_providers {
