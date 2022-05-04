@@ -148,6 +148,19 @@ resource "aws_security_group" "https" {
   }
 }
 
+resource "aws_security_group" "amqp" {
+  name = "amqp-tf"
+  description = "Allows amqp traffic"
+  vpc_id = aws_vpc.app_vpc.id
+
+  ingress {
+    from_port = 5671
+    protocol  = "TCP"
+    to_port   = 5671
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_security_group" "egress_all" {
   name = "egress-all"
   description = "Allow all outbound traffic"
