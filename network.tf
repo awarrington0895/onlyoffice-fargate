@@ -3,25 +3,6 @@ resource "aws_vpc" "app_vpc" {
   enable_dns_hostnames = true
 }
 
-resource "aws_vpc_endpoint" "efs" {
-  service_name = "com.amazonaws.us-east-1.elasticfilesystem"
-  vpc_id       = aws_vpc.app_vpc.id
-  private_dns_enabled = true
-  vpc_endpoint_type = "Interface"
-
-  security_group_ids = [
-    aws_security_group.nfs.id,
-    aws_security_group.egress_all.id,
-    aws_security_group.http.id,
-    aws_security_group.https.id
-  ]
-
-  subnet_ids = [
-    aws_subnet.private_e.id,
-    aws_subnet.private_d.id
-  ]
-}
-
 resource "aws_subnet" "public_d" {
   cidr_block = "10.0.1.0/25"
   vpc_id     = aws_vpc.app_vpc.id

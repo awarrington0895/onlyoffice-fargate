@@ -58,17 +58,17 @@ resource "aws_efs_access_point" "rabbitmq" {
   }
 }
 
-resource "aws_efs_mount_target" "pub1e" {
+resource "aws_efs_mount_target" "pvt1e" {
   file_system_id  = aws_efs_file_system.onlyoffice.id
-  subnet_id       = aws_subnet.public_e.id
+  subnet_id       = aws_subnet.private_e.id
   security_groups = [
     aws_security_group.nfs.id
   ]
 }
 
-resource "aws_efs_mount_target" "pub1d" {
+resource "aws_efs_mount_target" "pvt1d" {
   file_system_id  = aws_efs_file_system.onlyoffice.id
-  subnet_id       = aws_subnet.public_d.id
+  subnet_id       = aws_subnet.private_d.id
   security_groups = [
     aws_security_group.nfs.id
   ]
