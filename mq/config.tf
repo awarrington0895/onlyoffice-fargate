@@ -6,8 +6,8 @@ terraform {
   required_version = ">= 1.0"
 
   backend "s3" {
-    bucket = "asw-sample-tf-backend-4"
-    key = "terraform.tfstate"
+    bucket = "asw-sample-tf-backend-3"
+    key = "mq/terraform.tfstate"
     region = "us-east-1"
   }
 
