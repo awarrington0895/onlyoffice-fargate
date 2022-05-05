@@ -19,8 +19,8 @@ resource "aws_mq_broker" "main" {
   }
 
   user {
-    password = "PdbueowMvG62y0QEaJSI"
-    username = "onlyoffice"
+    password = var.password
+    username = var.username
   }
 
 }

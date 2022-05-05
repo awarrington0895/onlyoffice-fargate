@@ -1,14 +1,15 @@
 variable "amqp_username" {
-  type = string
+  type        = string
   description = "Username for authenticating to message broker"
 }
 
 variable "amqp_password" {
-  type = string
+  type        = string
+  sensitive   = true
   description = "Password for authenticating to message broker"
 }
 
 variable "amqp_host" {
-  type = string
+  type        = string
   description = "Endpoint for accessing message broker"
 }
