@@ -8,21 +8,30 @@ resource "aws_ecs_cluster" "app" {
 
 resource "aws_ecs_task_definition" "onlyoffice" {
   family                   = "onlyoffice"
-  cpu                      = 1024
-  memory                   = 2048
+  cpu                      = 2048
+  memory                   = 4096
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   execution_role_arn       = aws_iam_role.onlyoffice_task_execution_role.arn
+  task_role_arn            = aws_iam_role.onlyoffice_task_role.arn
 
   container_definitions = jsonencode([
     {
       name         = "onlyoffice"
-      image        = "${aws_ecr_repository.onlyoffice.repository_url}:latest"
-      #      image        = "onlyoffice/documentserver-de:7.0.1"
+      image        = "${data.aws_ssm_parameter.inputs["ecr_url"].value}:latest"
+      cpu          = 2048
+      memory       = 4096
       portMappings = [
         {
           containerPort = 80
           hostPort      = 80
+        }
+      ]
+
+      environment = [
+        {
+          name  = "AMQP_URI"
+          value = "amqps://${var.amqp_username}:${var.amqp_password}@${var.amqp_host}"
         }
       ]
 
@@ -45,7 +54,7 @@ resource "aws_ecs_task_definition" "onlyoffice" {
           containerPath = "/var/log/onlyoffice"
         },
         {
-          sourceVolume = "rabbitmq"
+          sourceVolume  = "rabbitmq"
           containerPath = "/var/lib/rabbitmq"
         }
       ]
@@ -56,7 +65,7 @@ resource "aws_ecs_task_definition" "onlyoffice" {
     name = "onlyoffice-logs"
 
     efs_volume_configuration {
-      file_system_id = aws_efs_file_system.onlyoffice.id
+      file_system_id     = aws_efs_file_system.onlyoffice.id
       transit_encryption = "ENABLED"
       authorization_config {
         access_point_id = aws_efs_access_point.onlyoffice-logs.id
@@ -68,7 +77,7 @@ resource "aws_ecs_task_definition" "onlyoffice" {
     name = "onlyoffice-files"
 
     efs_volume_configuration {
-      file_system_id = aws_efs_file_system.onlyoffice.id
+      file_system_id     = aws_efs_file_system.onlyoffice.id
       transit_encryption = "ENABLED"
       authorization_config {
         access_point_id = aws_efs_access_point.onlyoffice-files.id
@@ -80,7 +89,7 @@ resource "aws_ecs_task_definition" "onlyoffice" {
     name = "rabbitmq"
 
     efs_volume_configuration {
-      file_system_id = aws_efs_file_system.onlyoffice.id
+      file_system_id     = aws_efs_file_system.onlyoffice.id
       transit_encryption = "ENABLED"
       authorization_config {
         access_point_id = aws_efs_access_point.rabbitmq.id
@@ -95,19 +104,20 @@ resource "aws_ecs_service" "onlyoffice" {
   cluster         = aws_ecs_cluster.app.id
   launch_type     = "FARGATE"
   desired_count   = 1
+  #  enable_execute_command = true
 
   network_configuration {
     assign_public_ip = false
 
     security_groups = [
-      aws_security_group.egress_all.id,
-      aws_security_group.http.id,
-      aws_security_group.nfs.id
+      data.aws_ssm_parameter.inputs["sg_egress"].value,
+      data.aws_ssm_parameter.inputs["sg_http"].value,
+      data.aws_ssm_parameter.inputs["sg_nfs"].value
     ]
 
     subnets = [
-      aws_subnet.private_d.id,
-      aws_subnet.private_e.id
+      data.aws_ssm_parameter.inputs["private_d_id"].value,
+      data.aws_ssm_parameter.inputs["private_e_id"].value
     ]
   }
 
@@ -124,17 +134,15 @@ resource "aws_alb" "onlyoffice" {
   load_balancer_type = "application"
 
   subnets = [
-    aws_subnet.public_d.id,
-    aws_subnet.public_e.id
+    data.aws_ssm_parameter.inputs["public_d_id"].value,
+    data.aws_ssm_parameter.inputs["public_e_id"].value,
   ]
 
   security_groups = [
-    aws_security_group.http.id,
-    aws_security_group.https.id,
-    aws_security_group.egress_all.id
+    data.aws_ssm_parameter.inputs["sg_http"].value,
+    data.aws_ssm_parameter.inputs["sg_https"].value,
+    data.aws_ssm_parameter.inputs["sg_egress"].value
   ]
-
-  depends_on = [aws_internet_gateway.igw]
 }
 
 resource "aws_alb_listener" "onlyoffice_http" {
@@ -153,23 +161,19 @@ resource "aws_lb_target_group" "onlyoffice" {
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
-  vpc_id      = aws_vpc.app_vpc.id
+  vpc_id      = data.aws_ssm_parameter.inputs["vpc_id"].value
 
   health_check {
-    enabled  = true
-    protocol = "HTTP"
-    path     = "/"
-    timeout  = 120
-    interval = 180
-    matcher  = "200,302"
+    enabled           = true
+    protocol          = "HTTP"
+    path              = "/"
+    timeout           = 120
+    interval          = 180
+    matcher           = "200,302"
     healthy_threshold = 2
   }
 
   depends_on = [aws_alb.onlyoffice]
-}
-
-resource "aws_ecr_repository" "onlyoffice" {
-  name = "onlyoffice"
 }
 
 output "alb_url" {

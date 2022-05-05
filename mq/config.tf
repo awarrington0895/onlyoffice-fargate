@@ -7,14 +7,14 @@ terraform {
 
   backend "s3" {
     bucket = "asw-sample-tf-backend-3"
-    key = "terraform.tfstate"
+    key = "mq/terraform.tfstate"
     region = "us-east-1"
   }
 
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "~> 3.69.0"
+      version = "~> 4.12.0"
     }
   }
 }
