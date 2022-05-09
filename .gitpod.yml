@@ -1,0 +1,7 @@
+image:
+  file: .gitpod.Dockerfile
+
+gitConfig:
+  alias.s: status
+  alias.fa: fetch --all
+  alias.co: checkout
