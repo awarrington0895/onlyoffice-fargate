@@ -2,10 +2,6 @@ resource "aws_cloudwatch_log_group" "onlyoffice_logs" {
   name = "/ecs/onlyoffice"
 }
 
-resource "aws_ecs_cluster" "app" {
-  name = "app"
-}
-
 resource "aws_ecs_task_definition" "onlyoffice" {
   family                   = "onlyoffice"
   cpu                      = 2048
@@ -101,10 +97,9 @@ resource "aws_ecs_task_definition" "onlyoffice" {
 resource "aws_ecs_service" "onlyoffice" {
   name            = "onlyoffice"
   task_definition = aws_ecs_task_definition.onlyoffice.arn
-  cluster         = aws_ecs_cluster.app.id
+  cluster         = local.onlyoffice_cluster_id
   launch_type     = "FARGATE"
   desired_count   = 1
-  #  enable_execute_command = true
 
   network_configuration {
     assign_public_ip = false
