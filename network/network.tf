@@ -140,6 +140,13 @@ resource "aws_security_group" "amqp" {
     to_port     = 5671
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  ingress {
+    from_port   = 5672
+    protocol    = "TCP"
+    to_port     = 5672
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_security_group" "egress_all" {

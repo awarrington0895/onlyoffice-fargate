@@ -6,7 +6,7 @@ locals {
 
 resource "aws_ssm_parameter" "outputs" {
   for_each = local.output
-  name = each.key
-  type = "String"
-  value = each.value
+  name     = each.key
+  type     = "String"
+  value    = each.value
 }

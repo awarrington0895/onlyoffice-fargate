@@ -7,7 +7,7 @@ terraform {
 
   backend "s3" {
     bucket  = "asw-sample-tf-backend-4"
-    key     = "onlyoffice-ecr/terraform.tfstate"
+    key     = "rabbitmq/terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
   }
