@@ -11,7 +11,7 @@ data "aws_iam_policy_document" "ecs_task_assume_role" {
 
 data "aws_iam_policy_document" "ecs_exec" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "ssmmessages:CreateControlChannel",
       "ssmmessages:CreateDataChannel",
@@ -55,7 +55,7 @@ data "aws_iam_policy" "efs_full_access" {
 }
 
 resource "aws_iam_role" "onlyoffice_task_role" {
-  name = "onlyoffice-task-role"
+  name               = "onlyoffice-task-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
 }
 
