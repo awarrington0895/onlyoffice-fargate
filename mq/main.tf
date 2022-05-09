@@ -7,11 +7,11 @@ resource "aws_mq_broker" "main" {
   publicly_accessible = false
 
   security_groups = [
-    data.aws_ssm_parameter.inputs["sg_amqp"].value
+    local.sg_amqp
   ]
 
   subnet_ids = [
-    data.aws_ssm_parameter.inputs["private_d_id"].value
+    local.private_d_id
   ]
 
   logs {

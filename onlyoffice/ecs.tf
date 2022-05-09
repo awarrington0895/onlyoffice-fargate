@@ -17,10 +17,10 @@ resource "aws_ecs_task_definition" "onlyoffice" {
 
   container_definitions = jsonencode([
     {
-      name         = "onlyoffice"
-      image        = "${data.aws_ssm_parameter.inputs["ecr_url"].value}:latest"
-      cpu          = 2048
-      memory       = 4096
+      name   = "onlyoffice"
+      image  = "${local.ecr_url}:latest"
+      cpu    = 2048
+      memory = 4096
       portMappings = [
         {
           containerPort = 80
@@ -37,7 +37,7 @@ resource "aws_ecs_task_definition" "onlyoffice" {
 
       logConfiguration = {
         logDriver = "awslogs"
-        options   = {
+        options = {
           awslogs-region        = "us-east-1"
           awslogs-group         = "/ecs/onlyoffice"
           awslogs-stream-prefix = "ecs"
@@ -110,14 +110,14 @@ resource "aws_ecs_service" "onlyoffice" {
     assign_public_ip = false
 
     security_groups = [
-      data.aws_ssm_parameter.inputs["sg_egress"].value,
-      data.aws_ssm_parameter.inputs["sg_http"].value,
-      data.aws_ssm_parameter.inputs["sg_nfs"].value
+      local.sg_egress,
+      local.sg_http,
+      local.sg_nfs
     ]
 
     subnets = [
-      data.aws_ssm_parameter.inputs["private_d_id"].value,
-      data.aws_ssm_parameter.inputs["private_e_id"].value
+      local.private_d_id,
+      local.private_e_id
     ]
   }
 
@@ -134,14 +134,14 @@ resource "aws_alb" "onlyoffice" {
   load_balancer_type = "application"
 
   subnets = [
-    data.aws_ssm_parameter.inputs["public_d_id"].value,
-    data.aws_ssm_parameter.inputs["public_e_id"].value,
+    local.public_d_id,
+    local.public_e_id
   ]
 
   security_groups = [
-    data.aws_ssm_parameter.inputs["sg_http"].value,
-    data.aws_ssm_parameter.inputs["sg_https"].value,
-    data.aws_ssm_parameter.inputs["sg_egress"].value
+    local.sg_http,
+    local.sg_https,
+    local.sg_egress
   ]
 }
 
@@ -161,7 +161,7 @@ resource "aws_lb_target_group" "onlyoffice" {
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
-  vpc_id      = data.aws_ssm_parameter.inputs["vpc_id"].value
+  vpc_id      = local.vpc_id
 
   health_check {
     enabled           = true
