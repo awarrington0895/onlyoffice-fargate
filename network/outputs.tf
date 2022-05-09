@@ -13,7 +13,7 @@ locals {
   }
 }
 
-resource "aws_ssm_parameter" "public_d_id" {
+resource "aws_ssm_parameter" "outputs" {
   for_each = local.output
   name     = each.key
   type     = "String"

@@ -24,10 +24,10 @@ resource "aws_ecs_task_definition" "onlyoffice" {
         }
       ]
 
-      environment = [
+      secrets = [
         {
-          name  = "AMQP_URI"
-          value = "amqps://${var.amqp_username}:${var.amqp_password}@${var.amqp_host}"
+          name      = "AMQP_URI"
+          valueFrom = local.broker_connection_uri_arn
         }
       ]
 

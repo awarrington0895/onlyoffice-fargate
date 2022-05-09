@@ -1,5 +1,16 @@
 locals {
-  log_path = "/ecs/rabbitmq"
+  log_path    = "/ecs/rabbitmq"
+  broker_user = "onlyoffice"
+}
+
+resource "aws_iam_role_policy_attachment" "allow_ssm_secrets" {
+  role       = aws_iam_role.rabbitmq_task_execution_role.name
+  policy_arn = local.allow_ssm_secrets_arn
+}
+
+resource "random_password" "broker_password" {
+  length  = 16
+  special = false
 }
 
 data "aws_iam_policy_document" "ecs_task_assume_role" {
@@ -50,6 +61,20 @@ resource "aws_ecs_task_definition" "rabbitmq" {
           containerPort = 5672
           hostPort      = 5672
           protocol      = "tcp"
+        }
+      ]
+
+      environment = [
+        {
+          name  = "RABBITMQ_DEFAULT_USER"
+          value = local.broker_user
+        }
+      ]
+
+      secrets = [
+        {
+          name      = "RABBITMQ_DEFAULT_PASS"
+          valueFrom = aws_ssm_parameter.broker_password.arn
         }
       ]
 

@@ -27,23 +27,6 @@ resource "aws_iam_policy" "ecs_exec" {
   path        = "/"
   description = "Allows ecs services to enable ecs exec"
   policy      = data.aws_iam_policy_document.ecs_exec.json
-  #  policy = <<EOF
-  #  {
-  #   "Version": "2012-10-17",
-  #   "Statement": [
-  #       {
-  #       "Effect": "Allow",
-  #       "Action": [
-  #            "ssmmessages:CreateControlChannel",
-  #            "ssmmessages:CreateDataChannel",
-  #            "ssmmessages:OpenControlChannel",
-  #            "ssmmessages:OpenDataChannel"
-  #       ],
-  #      "Resource": "*"
-  #      }
-  #   ]
-  #}
-  #EOF
 }
 
 data "aws_iam_policy" "ecs_task_execution_role" {
@@ -68,6 +51,11 @@ resource "aws_iam_role" "onlyoffice_task_execution_role" {
 #  policy_arn = aws_iam_policy.ecs_exec.arn
 #  role = aws_iam_role.onlyoffice_task_execution_role.name
 #}
+
+resource "aws_iam_role_policy_attachment" "allow_ssm_secrets" {
+  role       = aws_iam_role.onlyoffice_task_execution_role.name
+  policy_arn = local.allow_ssm_secrets_arn
+}
 
 resource "aws_iam_role_policy_attachment" "ecs_task_role" {
   role       = aws_iam_role.onlyoffice_task_role.name

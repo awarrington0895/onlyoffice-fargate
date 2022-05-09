@@ -1,3 +1,13 @@
+locals {
+  broker_user     = "onlyoffice"
+  broker_password = random_password.broker_password.result
+}
+
+resource "random_password" "broker_password" {
+  length  = 16
+  special = false
+}
+
 resource "aws_mq_broker" "main" {
   broker_name         = "onlyoffice-broker"
   engine_type         = "RabbitMQ"
@@ -19,8 +29,8 @@ resource "aws_mq_broker" "main" {
   }
 
   user {
-    password = var.password
-    username = var.username
+    password = local.broker_password
+    username = local.broker_user
   }
 
 }
