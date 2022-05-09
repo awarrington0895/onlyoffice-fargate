@@ -11,6 +11,7 @@ locals {
     "sg_egress"    = "/network/security_group/egress_id"
     "vpc_id"       = "/network/vpc_id"
     "ecr_url"      = "/ecr/repository_url"
+    "onlyoffice_cluster_id" = "/shared/onlyoffice_cluster_id"
   }
 
   public_d_id  = data.aws_ssm_parameter.inputs["public_d_id"].value
@@ -24,6 +25,7 @@ locals {
   sg_egress    = data.aws_ssm_parameter.inputs["sg_egress"].value
   vpc_id       = data.aws_ssm_parameter.inputs["vpc_id"].value
   ecr_url      = data.aws_ssm_parameter.inputs["ecr_url"].value
+  onlyoffice_cluster_id = data.aws_ssm_parameter.inputs["onlyoffice_cluster_id"].value
 }
 
 
