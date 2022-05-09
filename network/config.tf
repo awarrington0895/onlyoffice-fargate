@@ -6,9 +6,10 @@ terraform {
   required_version = ">= 1.0"
 
   backend "s3" {
-    bucket = "asw-sample-tf-backend-4"
-    key    = "network/terraform.tfstate"
-    region = "us-east-1"
+    bucket  = "asw-sample-tf-backend-4"
+    key     = "network/terraform.tfstate"
+    region  = "us-east-1"
+    encrypt = true
   }
 
   required_providers {
