@@ -1,3 +1,3 @@
-resource "aws_ecs_cluster" "onlyoffice" {
-  name = "onlyoffice"
+resource "aws_ecs_cluster" "demo" {
+  name = "demo"
 }

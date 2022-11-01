@@ -1,6 +1,6 @@
 locals {
   input = {
-    "onlyoffice_cluster_id" = "/shared/onlyoffice_cluster_id"
+    "onlyoffice_cluster_id" = "/shared/demo_cluster_id"
     "sg_amqp"               = "/network/security_group/amqp_id"
     "sg_egress"             = "/network/security_group/egress_id"
     "private_e_id"          = "/network/subnet/private_e_id"

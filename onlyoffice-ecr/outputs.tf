@@ -1,6 +1,6 @@
 locals {
   output = {
-    "/ecr/repository_url" = aws_ecr_repository.onlyoffice.repository_url
+    "/ecr/repository_url" = aws_ecr_repository.demo.repository_url
   }
 }
 

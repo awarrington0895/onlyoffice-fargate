@@ -1,3 +1,3 @@
-resource "aws_ecr_repository" "onlyoffice" {
-  name = "onlyoffice"
+resource "aws_ecr_repository" "demo" {
+  name = "demo"
 }

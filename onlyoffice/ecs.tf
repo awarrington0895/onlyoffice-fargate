@@ -1,9 +1,9 @@
-resource "aws_cloudwatch_log_group" "onlyoffice_logs" {
-  name = "/ecs/onlyoffice"
+resource "aws_cloudwatch_log_group" "demo_logs" {
+  name = "/ecs/demo"
 }
 
-resource "aws_ecs_task_definition" "onlyoffice" {
-  family                   = "onlyoffice"
+resource "aws_ecs_task_definition" "demo" {
+  family                   = "demo"
   cpu                      = 2048
   memory                   = 4096
   requires_compatibilities = ["FARGATE"]
@@ -13,84 +13,47 @@ resource "aws_ecs_task_definition" "onlyoffice" {
 
   container_definitions = jsonencode([
     {
-      name   = "onlyoffice"
+      name   = "demo"
       image  = "${local.ecr_url}:latest"
       cpu    = 2048
       memory = 4096
       portMappings = [
         {
-          containerPort = 80
-          hostPort      = 80
+          containerPort = 8080
+          hostPort      = 8080
         }
       ]
-
-      secrets = [
-        {
-          name      = "AMQP_URI"
-          valueFrom = local.broker_connection_uri_arn
-        }
-      ]
-
       logConfiguration = {
         logDriver = "awslogs"
         options = {
           awslogs-region        = "us-east-1"
-          awslogs-group         = "/ecs/onlyoffice"
+          awslogs-group         = "/ecs/demo"
           awslogs-stream-prefix = "ecs"
         }
       }
 
       mountPoints = [
         {
-          sourceVolume  = "onlyoffice-files"
-          containerPath = "/var/lib/onlyoffice"
-        },
+          sourceVolume  = "logs"
+          containerPath = "/logs"
+        }
+      ]
+    },
+    {
+      name = "cloudwatch-agent"
+      image = "public.ecr.aws/cloudwatch-agent/cloudwatch-agent:latest"
+
+      mountPoints = [
         {
-          sourceVolume  = "onlyoffice-logs"
-          containerPath = "/var/log/onlyoffice"
-        },
-        {
-          sourceVolume  = "rabbitmq"
-          containerPath = "/var/lib/rabbitmq"
+          sourceVolume = "logs"
+          containerPath = "/logs"
         }
       ]
     }
   ])
 
   volume {
-    name = "onlyoffice-logs"
-
-    efs_volume_configuration {
-      file_system_id     = aws_efs_file_system.onlyoffice.id
-      transit_encryption = "ENABLED"
-      authorization_config {
-        access_point_id = aws_efs_access_point.onlyoffice-logs.id
-      }
-    }
-  }
-
-  volume {
-    name = "onlyoffice-files"
-
-    efs_volume_configuration {
-      file_system_id     = aws_efs_file_system.onlyoffice.id
-      transit_encryption = "ENABLED"
-      authorization_config {
-        access_point_id = aws_efs_access_point.onlyoffice-files.id
-      }
-    }
-  }
-
-  volume {
-    name = "rabbitmq"
-
-    efs_volume_configuration {
-      file_system_id     = aws_efs_file_system.onlyoffice.id
-      transit_encryption = "ENABLED"
-      authorization_config {
-        access_point_id = aws_efs_access_point.rabbitmq.id
-      }
-    }
+    name = "logs"
   }
 }
 
@@ -151,9 +114,9 @@ resource "aws_alb_listener" "onlyoffice_http" {
   }
 }
 
-resource "aws_lb_target_group" "onlyoffice" {
-  name        = "onlyoffice"
-  port        = 80
+resource "aws_lb_target_group" "demo" {
+  name        = "demo"
+  port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = local.vpc_id

@@ -11,7 +11,7 @@ locals {
     "sg_egress"                 = "/network/security_group/egress_id"
     "vpc_id"                    = "/network/vpc_id"
     "ecr_url"                   = "/ecr/repository_url"
-    "onlyoffice_cluster_id"     = "/shared/onlyoffice_cluster_id"
+    "onlyoffice_cluster_id"     = "/shared/demo_cluster_id"
     "allow_ssm_secrets_arn"     = "/shared/iam/allow_ssm_secrets_arn"
     "broker_connection_uri_arn" = "/rabbitmq/broker_connection_uri_arn"
   }
