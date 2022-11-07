@@ -38,33 +38,6 @@ resource "aws_ecs_task_definition" "demo" {
           containerPath = "/logs"
         }
       ]
-    },
-    {
-      name = "cloudwatch-agent"
-      image = "public.ecr.aws/cloudwatch-agent/cloudwatch-agent:latest"
-      secrets = [
-        {
-          name = "CW_CONFIG_CONTENT"
-          valueFrom = "ecs-cwagent"
-        }
-      ]
-
-      mountPoints = [
-        {
-          sourceVolume = "logs"
-          containerPath = "/logs"
-        }
-      ]
-
-      logConfiguration = {
-        logDriver = "awslogs",
-        options = {
-          awslogs-create-group = "True"
-          awslogs-group = "/ecs/ecs-cwagent-fargate"
-          awslogs-region = "us-east-1"
-          awslogs-stream-prefix = "ecs"
-        }
-      }
     }
   ])
 
@@ -127,8 +100,29 @@ resource "aws_alb_listener" "onlyoffice_http" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.demo.arn
+
+    # fixed_response {
+    #   content_type = "text/plain"
+    #   message_body = "Route not found!"
+    #   status_code = "200"
+    # }
   }
 }
+
+# resource "aws_alb_listener_rule" "onlyoffice_rule" {
+#   listener_arn = aws_alb_listener.onlyoffice_http.arn
+
+#   action {
+#     type = "forward"
+#     target_group_arn = aws_lb_target_group.demo.arn
+#   }
+
+#   condition {
+#     path_pattern {
+#       values = ["/demo/*"]
+#     }
+#   }
+# }
 
 resource "aws_lb_target_group" "demo" {
   name        = "demo"
@@ -141,8 +135,8 @@ resource "aws_lb_target_group" "demo" {
     enabled           = true
     protocol          = "HTTP"
     path              = "/hello"
-    timeout           = 120
-    interval          = 180
+    timeout           = 20
+    interval          = 30
     matcher           = "200,302"
     healthy_threshold = 2
   }
