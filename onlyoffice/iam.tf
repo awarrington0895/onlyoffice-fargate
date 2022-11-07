@@ -29,6 +29,14 @@ resource "aws_iam_policy" "ecs_exec" {
   policy      = data.aws_iam_policy_document.ecs_exec.json
 }
 
+data "aws_iam_policy" "cloudwatch_agent_server_policy" {
+  arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+data "aws_iam_policy" "ssm_readonly" {
+  arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
+
 data "aws_iam_policy" "ecs_task_execution_role" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
@@ -70,4 +78,19 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role" {
 resource "aws_iam_role_policy_attachment" "efs_full_access" {
   role       = aws_iam_role.onlyoffice_task_execution_role.name
   policy_arn = data.aws_iam_policy.efs_full_access.arn
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent_to_task" {
+  role       = aws_iam_role.onlyoffice_task_role.name
+  policy_arn = data.aws_iam_policy.cloudwatch_agent_server_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent" {
+  role       = aws_iam_role.onlyoffice_task_execution_role.name
+  policy_arn = data.aws_iam_policy.cloudwatch_agent_server_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_readonly" {
+  role       = aws_iam_role.onlyoffice_task_execution_role.name
+  policy_arn = data.aws_iam_policy.ssm_readonly.arn
 }

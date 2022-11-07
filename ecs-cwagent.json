@@ -1,0 +1,14 @@
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/logs/demo-app.log",
+            "log_group_name": "/ecs/demo-app"
+          }
+        ]
+      }
+    }
+  }
+}

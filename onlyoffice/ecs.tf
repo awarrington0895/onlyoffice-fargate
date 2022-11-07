@@ -42,6 +42,12 @@ resource "aws_ecs_task_definition" "demo" {
     {
       name = "cloudwatch-agent"
       image = "public.ecr.aws/cloudwatch-agent/cloudwatch-agent:latest"
+      secrets = [
+        {
+          name = "CW_CONFIG_CONTENT"
+          valueFrom = "ecs-cwagent"
+        }
+      ]
 
       mountPoints = [
         {
@@ -49,6 +55,16 @@ resource "aws_ecs_task_definition" "demo" {
           containerPath = "/logs"
         }
       ]
+
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          awslogs-create-group = "True"
+          awslogs-group = "/ecs/ecs-cwagent-fargate"
+          awslogs-region = "us-east-1"
+          awslogs-stream-prefix = "ecs"
+        }
+      }
     }
   ])
 
@@ -57,9 +73,9 @@ resource "aws_ecs_task_definition" "demo" {
   }
 }
 
-resource "aws_ecs_service" "onlyoffice" {
-  name            = "onlyoffice"
-  task_definition = aws_ecs_task_definition.onlyoffice.arn
+resource "aws_ecs_service" "demo" {
+  name            = "demo"
+  task_definition = aws_ecs_task_definition.demo.arn
   cluster         = local.onlyoffice_cluster_id
   launch_type     = "FARGATE"
   desired_count   = 1
@@ -80,14 +96,14 @@ resource "aws_ecs_service" "onlyoffice" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.onlyoffice.arn
-    container_name   = "onlyoffice"
-    container_port   = 80
+    target_group_arn = aws_lb_target_group.demo.arn
+    container_name   = "demo"
+    container_port   = 8080
   }
 }
 
-resource "aws_alb" "onlyoffice" {
-  name               = "onlyoffice-lb"
+resource "aws_alb" "demo" {
+  name               = "demo-lb"
   internal           = false
   load_balancer_type = "application"
 
@@ -104,13 +120,13 @@ resource "aws_alb" "onlyoffice" {
 }
 
 resource "aws_alb_listener" "onlyoffice_http" {
-  load_balancer_arn = aws_alb.onlyoffice.arn
+  load_balancer_arn = aws_alb.demo.arn
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.onlyoffice.arn
+    target_group_arn = aws_lb_target_group.demo.arn
   }
 }
 
@@ -124,16 +140,16 @@ resource "aws_lb_target_group" "demo" {
   health_check {
     enabled           = true
     protocol          = "HTTP"
-    path              = "/"
+    path              = "/hello"
     timeout           = 120
     interval          = 180
     matcher           = "200,302"
     healthy_threshold = 2
   }
 
-  depends_on = [aws_alb.onlyoffice]
+  depends_on = [aws_alb.demo]
 }
 
 output "alb_url" {
-  value = "http://${aws_alb.onlyoffice.dns_name}"
+  value = "http://${aws_alb.demo.dns_name}"
 }

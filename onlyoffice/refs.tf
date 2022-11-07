@@ -13,7 +13,6 @@ locals {
     "ecr_url"                   = "/ecr/repository_url"
     "onlyoffice_cluster_id"     = "/shared/demo_cluster_id"
     "allow_ssm_secrets_arn"     = "/shared/iam/allow_ssm_secrets_arn"
-    "broker_connection_uri_arn" = "/rabbitmq/broker_connection_uri_arn"
   }
 
   public_d_id               = data.aws_ssm_parameter.inputs["public_d_id"].value
@@ -29,7 +28,6 @@ locals {
   ecr_url                   = data.aws_ssm_parameter.inputs["ecr_url"].value
   onlyoffice_cluster_id     = data.aws_ssm_parameter.inputs["onlyoffice_cluster_id"].value
   allow_ssm_secrets_arn     = data.aws_ssm_parameter.inputs["allow_ssm_secrets_arn"].value
-  broker_connection_uri_arn = data.aws_ssm_parameter.inputs["broker_connection_uri_arn"].value
 }
 
 
